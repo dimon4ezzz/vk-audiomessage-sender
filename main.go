@@ -1,4 +1,4 @@
-package main
+package sender
 
 import (
 	"bufio"
@@ -18,23 +18,27 @@ import (
 )
 
 const (
-	clientID     = 0
-	clientSecret = ""
-	grantType    = "password"
-	username     = ""
-	password     = ""
-	version      = "5.120"
+	grantType = "password"
+	version   = "5.120"
 )
 
 const act = "authcheck_code"
 const audioMessageType = "audio_message"
-const filename = ""
-const recipient = 0
 
 const (
 	authcheckRegexp = `authcheck_code&hash=([^\"]+)`
 	tokenRegexp     = `access_token=([0-9a-f]+)`
 )
+
+// Auth is data for send message
+type Auth struct {
+	ClientID     int
+	ClientSecret string
+	Username     string
+	Password     string
+	Filename     string
+	Recipient    int
+}
 
 type OauthResponse struct {
 	URI string `json:"redirect_uri,omitempty"`
@@ -83,28 +87,29 @@ var (
 	errHashNotFound   = errors.New("not found match for hash")
 )
 
-func main() {
-	checkVariables()
+// Send is a main function to send audio message
+func Send(auth Auth) {
+	checkVariables(auth)
 	setupClient()
 
-	redirectURI := getRedirectURI()
+	redirectURI := getRedirectURI(auth)
 	hash := getAuthHash(redirectURI)
 	token := getAccessToken(hash)
 	uploadURI := getUploadServer(token)
-	fileData := uploadFileAndGetData(uploadURI)
+	fileData := uploadFileAndGetData(uploadURI, auth)
 	document := getDocument(fileData, token)
-	message := sendMessage(document, token)
+	message := sendMessage(document, token, auth)
 
 	println("look at " + message.String())
 }
 
-func checkVariables() {
-	if clientID == 0 ||
-		clientSecret == "" ||
-		username == "" ||
-		password == "" ||
-		filename == "" ||
-		recipient == 0 {
+func checkVariables(auth Auth) {
+	if auth.ClientID == 0 ||
+		auth.ClientSecret == "" ||
+		auth.Username == "" ||
+		auth.Password == "" ||
+		auth.Filename == "" ||
+		auth.Recipient == 0 {
 		panic(errConstantNotSet)
 	}
 }
@@ -117,8 +122,8 @@ func setupClient() {
 	}
 }
 
-func getRedirectURI() string {
-	uri := getOauthURI()
+func getRedirectURI(auth Auth) string {
+	uri := getOauthURI(auth)
 
 	resp, err := client.Get(uri)
 	checkErr(err)
@@ -130,8 +135,8 @@ func getRedirectURI() string {
 	return oauthResp.URI
 }
 
-func getOauthURI() string {
-	rawQuery := getOauthRawQuery()
+func getOauthURI(auth Auth) string {
+	rawQuery := getOauthRawQuery(auth)
 
 	uri := &url.URL{
 		Scheme:   "https",
@@ -143,13 +148,13 @@ func getOauthURI() string {
 	return uri.String()
 }
 
-func getOauthRawQuery() string {
+func getOauthRawQuery(auth Auth) string {
 	query := url.Values{}
-	query.Set("client_id", strconv.Itoa(clientID))
-	query.Add("client_secret", clientSecret)
+	query.Set("client_id", strconv.Itoa(auth.ClientID))
+	query.Add("client_secret", auth.ClientSecret)
 	query.Add("grant_type", grantType)
-	query.Add("password", password)
-	query.Add("username", username)
+	query.Add("password", auth.Password)
+	query.Add("username", auth.Username)
 	query.Add("version", version)
 	query.Add("2fa_supported", "1")
 
@@ -281,15 +286,15 @@ func getMessagesUploadServerRawQuery(token string) string {
 	return query.Encode()
 }
 
-func uploadFileAndGetData(uploadURI string) string {
+func uploadFileAndGetData(uploadURI string, auth Auth) string {
 	buf := &bytes.Buffer{}
 	writer := multipart.NewWriter(buf)
 
-	file, err := os.Open(filename)
+	file, err := os.Open(auth.Filename)
 	checkErr(err)
 	defer file.Close()
 
-	part, err := writer.CreateFormFile("file", filename)
+	part, err := writer.CreateFormFile("file", auth.Filename)
 	checkErr(err)
 
 	_, err = io.Copy(part, file)
@@ -351,8 +356,8 @@ func getSaveRawQuery(fileData string, token string) string {
 	return query.Encode()
 }
 
-func sendMessage(document Document, token string) Message {
-	uri := getMessagesSendURI(document, token)
+func sendMessage(document Document, token string, auth Auth) Message {
+	uri := getMessagesSendURI(document, token, auth)
 
 	resp, err := client.Get(uri)
 	checkErr(err)
@@ -362,15 +367,15 @@ func sendMessage(document Document, token string) Message {
 	getStructFromJSON(resp.Body, messageResponse)
 
 	message := Message{
-		User: recipient,
+		User: auth.Recipient,
 		ID:   messageResponse.Response,
 	}
 
 	return message
 }
 
-func getMessagesSendURI(document Document, token string) string {
-	rawQuery := getMessageSendRawQuery(document, token)
+func getMessagesSendURI(document Document, token string, auth Auth) string {
+	rawQuery := getMessageSendRawQuery(document, token, auth)
 
 	uri := url.URL{
 		Scheme:   "https",
@@ -382,14 +387,14 @@ func getMessagesSendURI(document Document, token string) string {
 	return uri.String()
 }
 
-func getMessageSendRawQuery(document Document, token string) string {
+func getMessageSendRawQuery(document Document, token string, auth Auth) string {
 	// get 5-digit number
 	random := rand.Intn(90000) + 9999
 	randomStr := strconv.Itoa(random)
 
 	query := url.Values{}
 	query.Set("access_token", token)
-	query.Add("user_id", strconv.Itoa(recipient))
+	query.Add("user_id", strconv.Itoa(auth.Recipient))
 	query.Add("attachment", document.String())
 	query.Add("v", version)
 	query.Add("random_id", randomStr)
