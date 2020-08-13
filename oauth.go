@@ -35,6 +35,29 @@ var (
 	errHashNotFound   = errors.New("not found match for hash")
 )
 
+func getAccessToken(auth Auth) string {
+	// get redirect uri for 2fa
+	redirectURI := getRedirectURI(auth)
+	// get hash for special oauth link
+	hash := getAuthHash(redirectURI)
+
+	code := get2faCode()
+	loginURI := getLoginURI(hash, code)
+
+	resp, err := client.Get(loginURI)
+	checkErr(err)
+	defer resp.Body.Close()
+
+	// it can be 301 when wrong
+	if resp.StatusCode != 200 {
+		log.Fatal(errResponseStatus)
+	}
+
+	fragment := resp.Request.URL.Fragment
+	token := getTokenFromFragment(fragment)
+	return token
+}
+
 func getRedirectURI(auth Auth) string {
 	uri := getOauthURI(auth)
 
@@ -100,29 +123,6 @@ func getMatchFromReader(body io.ReadCloser, re *regexp.Regexp) string {
 	}
 
 	panic(errHashNotFound)
-}
-
-func getAccessToken(auth Auth) string {
-	// get redirect uri for 2fa
-	redirectURI := getRedirectURI(auth)
-	// get hash for special oauth link
-	hash := getAuthHash(redirectURI)
-
-	code := get2faCode()
-	loginURI := getLoginURI(hash, code)
-
-	resp, err := client.Get(loginURI)
-	checkErr(err)
-	defer resp.Body.Close()
-
-	// it can be 301 when wrong
-	if resp.StatusCode != 200 {
-		log.Fatal(errResponseStatus)
-	}
-
-	fragment := resp.Request.URL.Fragment
-	token := getTokenFromFragment(fragment)
-	return token
 }
 
 func get2faCode() string {
