@@ -102,7 +102,12 @@ func getMatchFromReader(body io.ReadCloser, re *regexp.Regexp) string {
 	panic(errHashNotFound)
 }
 
-func getAccessToken(hash string) string {
+func getAccessToken(auth Auth) string {
+	// get redirect uri for 2fa
+	redirectURI := getRedirectURI(auth)
+	// get hash for special oauth link
+	hash := getAuthHash(redirectURI)
+
 	code := get2faCode()
 	loginURI := getLoginURI(hash, code)
 

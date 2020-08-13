@@ -30,12 +30,8 @@ func Send(auth Auth) {
 	// create http client
 	setupClient()
 
-	// get redirect uri for 2fa
-	redirectURI := getRedirectURI(auth)
-	// get hash for special oauth link
-	hash := getAuthHash(redirectURI)
 	// get vk access token
-	token := getAccessToken(hash)
+	token := getAccessToken(auth)
 	// get upload uri
 	uploadURI := getUploadServer(token)
 	// upload file and get vk internal data about file
