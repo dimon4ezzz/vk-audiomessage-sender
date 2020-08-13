@@ -4,8 +4,6 @@ This tiny script helps you send audio message to person at [VK](https://vk.com).
 
 **Attention!** Your application have to have [direct authorizaion](https://vk.com/dev/auth_direct) ability!
 
-**Attention!** This script supports **only** 2fa!
-
 ## Setup
 
 You should set up this Auth fields, hardcoded in `main.go`:
@@ -39,6 +37,6 @@ func main() {
 }
 ```
 
-Please, wait for 2fa code prompt and say to shell this code.
+If needed (2fa activated): wait for 2fa code prompt and say to shell this code.
 
 At the end of this script you will see link to your message at full VK Web version.

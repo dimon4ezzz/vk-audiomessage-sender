@@ -25,7 +25,8 @@ const (
 )
 
 type OauthResponse struct {
-	URI string `json:"redirect_uri,omitempty"`
+	URI   string `json:"redirect_uri,omitempty"`
+	Token string `json:"access_token,omitempty"`
 }
 
 var (
@@ -36,10 +37,14 @@ var (
 )
 
 func getAccessToken(auth Auth) string {
-	// get redirect uri for 2fa
-	redirectURI := getRedirectURI(auth)
+	response := getOauthResponse(auth)
+
+	if response.Token != "" {
+		return response.Token
+	}
+
 	// get hash for special oauth link
-	hash := getAuthHash(redirectURI)
+	hash := getAuthHash(response.URI)
 
 	code := get2faCode()
 	loginURI := getLoginURI(hash, code)
@@ -58,7 +63,7 @@ func getAccessToken(auth Auth) string {
 	return token
 }
 
-func getRedirectURI(auth Auth) string {
+func getOauthResponse(auth Auth) *OauthResponse {
 	uri := getOauthURI(auth)
 
 	resp, err := client.Get(uri)
@@ -68,7 +73,7 @@ func getRedirectURI(auth Auth) string {
 	oauthResp := &OauthResponse{}
 	getStructFromJSON(resp.Body, oauthResp)
 
-	return oauthResp.URI
+	return oauthResp
 }
 
 func getOauthURI(auth Auth) string {
