@@ -3,7 +3,6 @@ package sender
 import (
 	"math/rand"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -25,13 +24,10 @@ type Message struct {
 
 func sendMessage(document Document, token string, auth Auth) Message {
 	uri := getMessagesSendURI(document, token, auth)
-	println(uri)
-	println(document.String())
 
 	resp, err := client.Get(uri)
 	checkErr(err)
 	defer resp.Body.Close()
-	resp.Write(os.Stdout)
 
 	messageResponse := &MessageResponse{}
 	getStructFromJSON(resp.Body, messageResponse)
