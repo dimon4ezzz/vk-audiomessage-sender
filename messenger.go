@@ -3,8 +3,10 @@ package sender
 import (
 	"math/rand"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type MessageResponse struct {
@@ -23,10 +25,13 @@ type Message struct {
 
 func sendMessage(document Document, token string, auth Auth) Message {
 	uri := getMessagesSendURI(document, token, auth)
+	println(uri)
+	println(document.String())
 
 	resp, err := client.Get(uri)
 	checkErr(err)
 	defer resp.Body.Close()
+	resp.Write(os.Stdout)
 
 	messageResponse := &MessageResponse{}
 	getStructFromJSON(resp.Body, messageResponse)
@@ -53,10 +58,7 @@ func getMessagesSendURI(document Document, token string, auth Auth) string {
 }
 
 func getMessageSendRawQuery(document Document, token string, auth Auth) string {
-	// get 5-digit number
-	random := rand.Intn(90000) + 9999
-	randomStr := strconv.Itoa(random)
-
+	randomStr := getRandomString()
 	query := url.Values{}
 	query.Set("access_token", token)
 	query.Add("user_id", strconv.Itoa(auth.Recipient))
@@ -65,6 +67,14 @@ func getMessageSendRawQuery(document Document, token string, auth Auth) string {
 	query.Add("random_id", randomStr)
 
 	return query.Encode()
+}
+
+func getRandomString() string {
+	randomSource := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(randomSource)
+	// get 5-digit number
+	random := r.Intn(90000) + 9999
+	return strconv.Itoa(random)
 }
 
 func (doc Document) String() string {
