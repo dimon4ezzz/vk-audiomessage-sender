@@ -9,6 +9,8 @@ import (
 	"net/http/cookiejar"
 )
 
+const defaultOauthFile = "vk-token"
+
 // Auth is data for send message
 type Auth struct {
 	ClientID     int    // VK Application Client ID
@@ -19,19 +21,25 @@ type Auth struct {
 	Recipient    int    // Recipient VK ID
 }
 
+// Setup is data for application running. Can be empty.
+type Setup struct {
+	SaveOauth bool   // Should the application save oauth
+	OauthFile string // Custom oauth store file; can be empty (see DefaultOauthFile)
+}
+
 var client http.Client
 
 var errConstantNotSet = errors.New("some Auth field did not set")
 
 // Send is a main function to send audio message
-func Send(auth Auth) {
-	// check all fields in Auth were set
-	checkVariables(auth)
+func Send(auth Auth, setup Setup) {
+	// check required fields in Auth were set
+	checkVariables(auth, &setup)
 	// create http client
 	setupClient()
 
 	// get vk access token
-	token := getAccessToken(auth)
+	token := getAccessToken(auth, setup)
 	// get upload uri
 	uploadURI := getUploadServer(token)
 	// upload file and get vk internal data about file
@@ -44,7 +52,7 @@ func Send(auth Auth) {
 	println("look at " + message.String())
 }
 
-func checkVariables(auth Auth) {
+func checkVariables(auth Auth, setup *Setup) {
 	if auth.ClientID == 0 ||
 		auth.ClientSecret == "" ||
 		auth.Username == "" ||
@@ -52,6 +60,10 @@ func checkVariables(auth Auth) {
 		auth.Filename == "" ||
 		auth.Recipient == 0 {
 		log.Fatal(errConstantNotSet)
+	}
+
+	if setup.SaveOauth && setup.OauthFile == "" {
+		setup.OauthFile = defaultOauthFile
 	}
 }
 

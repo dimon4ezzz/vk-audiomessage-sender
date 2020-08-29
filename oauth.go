@@ -36,7 +36,30 @@ var (
 	errHashNotFound   = errors.New("not found match for hash")
 )
 
-func getAccessToken(auth Auth) string {
+func getAccessToken(auth Auth, setup Setup) string {
+	if setup.SaveOauth {
+		file, err := os.OpenFile(setup.OauthFile, os.O_RDWR|os.O_CREATE, 0600)
+		checkErr(err)
+		defer file.Close()
+
+		stat, err := file.Stat()
+		checkErr(err)
+
+		if stat.Size() != 0 {
+			// TODO check token valid
+			return decode(auth.Password, file)
+		}
+
+		// file has no data
+		token := requestAccessToken(auth)
+		encode(auth.Password, token, file)
+		return token
+	}
+
+	return requestAccessToken(auth)
+}
+
+func requestAccessToken(auth Auth) string {
 	response := getOauthResponse(auth)
 
 	if response.Token != "" {
