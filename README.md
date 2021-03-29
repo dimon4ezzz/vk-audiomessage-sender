@@ -8,7 +8,7 @@ This tiny script helps you send audio message to person at [VK](https://vk.com).
 
 You should set up this `Auth` fields in call:
 1. `ClientID` — your application has client ID
-1. `ClientSecret` — your application has client secret key; you have to have [direct authorizaion](https://vk.com/dev/auth_direct) ability!
+1. `ClientSecret` — your application has client secret key; you have to have [direct authorization](https://vk.com/dev/auth_direct) ability!
 1. `Username` — your username: phone or email
 1. `Password` — your password in plain text 🤷‍♂️
 1. `Filename` — your `.ogg` filename (you [should use **mono**,16KHz,16Kb/s audio](https://vk.com/dev/upload_files_2)) without path
