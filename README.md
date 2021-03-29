@@ -41,7 +41,7 @@ func main() {
 }
 ```
 
-If needed (2fa activated): wait for 2fa code prompt and say to shell this code.
+If needed (2fa activated): wait for 2fa code prompt and type this code.
 
 At the end of this script you will see link to your message at full VK Web version.
 
