@@ -2,7 +2,7 @@
 
 This tiny script helps you send audio message to person at [VK](https://vk.com).
 
-**Attention!** Your application have to have [direct authorizaion](https://vk.com/dev/auth_direct) ability!
+**Attention!** Your application have to have [direct authorization](https://vk.com/dev/auth_direct) ability!
 
 ## Setup
 
