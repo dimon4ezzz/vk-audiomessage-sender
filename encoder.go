@@ -55,7 +55,9 @@ func decode(password string, file *os.File) string {
 
 	nonce, data := data[:size], data[size:]
 	token, err := gcm.Open(nil, nonce, data, nil)
-	checkErr(err)
+	if err != nil {
+		log.Fatal("token is invalid, please enter valid password or delete file")
+	}
 
 	return string(token)
 }

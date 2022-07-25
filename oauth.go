@@ -16,12 +16,12 @@ const act = "authcheck_code"
 
 const (
 	authcheckRegexp = `authcheck_code&hash=([^\"]+)`
-	tokenRegexp     = `access_token=([0-9a-f]+)`
+	tokenRegexp     = `access_token=([^&]+)`
 )
 
 const (
 	grantType = "password"
-	version   = "5.120"
+	version   = "5.131"
 )
 
 type OauthResponse struct {
